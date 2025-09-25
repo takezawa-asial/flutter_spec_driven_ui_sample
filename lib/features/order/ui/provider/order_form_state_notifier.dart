@@ -21,6 +21,7 @@ class OrderFormStateNotifier extends _$OrderFormStateNotifier {
 
   /// モックで Order を生成し、state を更新して返す
   Future<Order> fetch(String orderId) async {
+    // APIから取得を想定
     await Future<void>.delayed(const Duration(milliseconds: 400));
 
     final order = Order(

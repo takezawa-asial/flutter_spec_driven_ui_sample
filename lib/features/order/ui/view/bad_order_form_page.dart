@@ -20,104 +20,23 @@ class BadOrderFormPage extends HookConsumerWidget {
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (s) {
           final order = s.order;
-
-          // （ダメ例）UI内で分岐をベタ書き
-          String? banner;
-          bool enableCod = true, enableBank = true;
-          bool canBuy = true;
-          String? reason;
-          final hasSoldOut = order.items.any((i) => i.stock == Stock.soldOut);
-          if (hasSoldOut && order.orderType != OrderType.preorder) {
-            banner = '在庫がありません';
-            canBuy = false;
-            reason = '在庫なし';
-          }
-          if (order.orderType == OrderType.preorder) {
-            banner = '予約商品は代引不可';
-            enableCod = false;
-          }
-          if (order.orderType == OrderType.subscription) {
-            banner = '定期購入はクレジットカードのみ';
-            enableCod = false;
-            enableBank = false;
-          }
-          final hasLimited = order.items.any((i) => i.stock == Stock.limited);
-          final isPercent = order.coupon.maybeWhen(
-            percentOff: (_) => true,
-            orElse: () => false,
-          );
-          if (hasLimited && isPercent) {
-            enableBank = false;
-          }
-
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              if (banner != null)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3CD),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(banner),
-                ),
+              _BadBanner(order: order),
               const SizedBox(height: 16),
-
-              const Text(
-                '支払い方法（Bad: ビューで分岐・副作用）',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              RadioGroup<PaymentMethod>(
-                groupValue: order.paymentMethod,
+              _BadPayment(
+                order: order,
                 onChanged: (v) {
-                  // （Bad）ここで直接ビジネス条件を見て弾く等をやりがち
-                  if (v == PaymentMethod.cod && !enableCod) return;
-                  if (v == PaymentMethod.bank && !enableBank) return;
-                  notifier.fetch(_orderId); // 本来は selectPayment などで Order を更新
+                  notifier.selectPayment(v);
                 },
-                child: Column(
-                  children: const [
-                    RadioListTile<PaymentMethod>(
-                      title: Text('クレジットカード'),
-                      value: PaymentMethod.card,
-                    ),
-                    RadioListTile<PaymentMethod>(
-                      title: Text('代金引換'),
-                      value: PaymentMethod.cod,
-                    ),
-                    RadioListTile<PaymentMethod>(
-                      title: Text('銀行振込'),
-                      value: PaymentMethod.bank,
-                    ),
-                  ],
-                ),
               ),
-
               const SizedBox(height: 16),
-              if (order.shipment == Shipment.home) ...const [
-                Text('お届け先'),
-                SizedBox(height: 8),
-                TextField(decoration: InputDecoration(labelText: '郵便番号')),
-                TextField(decoration: InputDecoration(labelText: '住所')),
-                SizedBox(height: 16),
-              ] else ...const [
-                Text('受取店舗'),
-                SizedBox(height: 8),
-                TextField(decoration: InputDecoration(labelText: '店舗コード')),
-                SizedBox(height: 16),
-              ],
-
-              Text('小計: ${order.totalBeforeDiscount}'),
-              Text('割引: -${order.discountAmount}'),
-              Text('合計: ${order.totalAfterDiscount}'),
+              _BadAddress(order: order),
+              const SizedBox(height: 16),
+              _BadTotals(order: order),
               const SizedBox(height: 20),
-
-              ElevatedButton(
-                onPressed: canBuy ? () {} : null,
-                child: Text(canBuy ? '購入する' : '購入できません（${reason ?? ''}）'),
-              ),
-
+              _BadBuyButton(order: order),
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () => notifier.fetch(_orderId),
@@ -127,6 +46,163 @@ class BadOrderFormPage extends HookConsumerWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _BadBanner extends StatelessWidget {
+  final Order order;
+  const _BadBanner({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    String? banner;
+    final hasSoldOut = order.items.any((i) => i.stock == Stock.soldOut);
+    if (hasSoldOut && order.orderType != OrderType.preorder) {
+      banner = '在庫がありません';
+    } else if (order.orderType == OrderType.preorder) {
+      banner = '予約商品は代引不可';
+    } else if (order.orderType == OrderType.subscription) {
+      banner = '定期購入はクレジットカードのみ';
+    } else if (order.items.any((i) => i.stock == Stock.limited)) {
+      banner = '在庫が残りわずかです';
+    }
+
+    if (banner == null) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3CD),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(banner),
+    );
+  }
+}
+
+class _BadPayment extends StatelessWidget {
+  final Order order;
+  final ValueChanged<PaymentMethod> onChanged;
+  const _BadPayment({required this.order, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    bool card = true, cod = true, bank = true;
+    if (order.orderType == OrderType.preorder) cod = false;
+    if (order.orderType == OrderType.subscription) {
+      cod = false;
+      bank = false;
+    }
+    final hasLimited = order.items.any((i) => i.stock == Stock.limited);
+    final isPercent = order.coupon.maybeWhen(
+      percentOff: (_) => true,
+      orElse: () => false,
+    );
+    if (hasLimited && isPercent) bank = false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('支払い方法（Bad）', style: TextStyle(fontWeight: FontWeight.bold)),
+        RadioGroup<PaymentMethod>(
+          groupValue: order.paymentMethod,
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+          child: Column(
+            children: [
+              _radioTile(
+                enabled: card,
+                title: 'クレジットカード',
+                value: PaymentMethod.card,
+              ),
+              _radioTile(enabled: cod, title: '代金引換', value: PaymentMethod.cod),
+              _radioTile(
+                enabled: bank,
+                title: '銀行振込',
+                value: PaymentMethod.bank,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _radioTile({
+    required bool enabled,
+    required String title,
+    required PaymentMethod value,
+  }) {
+    final tile = RadioListTile<PaymentMethod>(title: Text(title), value: value);
+    if (enabled) return tile;
+    return IgnorePointer(
+      ignoring: true,
+      child: Opacity(opacity: 0.4, child: tile),
+    );
+  }
+}
+
+class _BadAddress extends StatelessWidget {
+  final Order order;
+  const _BadAddress({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    if (order.shipment == Shipment.home) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text('お届け先', style: TextStyle(fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          TextField(decoration: InputDecoration(labelText: '郵便番号')),
+          TextField(decoration: InputDecoration(labelText: '住所')),
+        ],
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text('受取店舗', style: TextStyle(fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          TextField(decoration: InputDecoration(labelText: '店舗コード')),
+        ],
+      );
+    }
+  }
+}
+
+class _BadTotals extends StatelessWidget {
+  final Order order;
+  const _BadTotals({required this.order});
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text('小計: ${order.totalBeforeDiscount}'),
+      Text('割引: -${order.discountAmount}'),
+      Text('合計: ${order.totalAfterDiscount}'),
+    ],
+  );
+}
+
+class _BadBuyButton extends StatelessWidget {
+  final Order order;
+  const _BadBuyButton({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    bool canBuy = true;
+    String? reason;
+    final hasSoldOut = order.items.any((i) => i.stock == Stock.soldOut);
+    if (hasSoldOut && order.orderType != OrderType.preorder) {
+      canBuy = false;
+      reason = '在庫なし';
+    }
+    return ElevatedButton(
+      onPressed: canBuy ? () {} : null,
+      child: Text(canBuy ? '購入する' : '購入できません（${reason ?? ''}）'),
     );
   }
 }

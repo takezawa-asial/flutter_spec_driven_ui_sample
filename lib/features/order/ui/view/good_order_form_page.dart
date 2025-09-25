@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spec_driven_ui_sample/features/order/domain/model/order.dart';
+import 'package:flutter_spec_driven_ui_sample/features/order/ui/mapper/order_to_good_order_form_page_ui_state.dart';
 import 'package:flutter_spec_driven_ui_sample/features/order/ui/provider/order_form_state_notifier.dart';
+import 'package:flutter_spec_driven_ui_sample/features/order/ui/state/good/good_order_form_page_ui_state.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class GoodOrderFormPage extends HookConsumerWidget {
@@ -10,7 +12,7 @@ class GoodOrderFormPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = orderFormStateProvider(_orderId);
-    final async = ref.watch(orderFormStateProvider(_orderId));
+    final async = ref.watch(provider);
     final notifier = ref.watch(provider.notifier);
 
     return Scaffold(
@@ -20,81 +22,27 @@ class GoodOrderFormPage extends HookConsumerWidget {
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (s) {
           final order = s.order;
-          final ui = _deriveViewState(order);
+          final ui = deriveGoodUiState(order);
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              if (ui.bannerText != null)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3CD),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(ui.bannerText!),
-                ),
+              _BannerView(state: ui.banner),
               const SizedBox(height: 16),
-
-              const Text(
-                '支払い方法',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              _PaymentSection(
+                state: ui.payment,
+                onChanged: (m) => notifier.selectPayment(m),
               ),
-              RadioGroup<PaymentMethod>(
-                groupValue: order.paymentMethod,
-                onChanged: (v) {
-                  if (v == null) {
-                    return;
-                  }
-                  notifier.selectPayment(v);
-                },
-                child: Column(
-                  children: [
-                    RadioListTile<PaymentMethod>(
-                      title: const Text('クレジットカード'),
-                      value: PaymentMethod.card,
-                    ),
-                    RadioListTile<PaymentMethod>(
-                      title: const Text('代金引換'),
-                      value: PaymentMethod.cod,
-                      // 無効化したいときは Visibility/IgnorePointer 等で制御
-                      // この例では ui.payment の可否は描画/操作に反映しない（良い例の主旨はロジック分離）
-                    ),
-                    RadioListTile<PaymentMethod>(
-                      title: const Text('銀行振込'),
-                      value: PaymentMethod.bank,
-                    ),
-                  ],
-                ),
-              ),
-
               const SizedBox(height: 16),
-              if (ui.needAddress) ...const [
-                Text('お届け先', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                TextField(decoration: InputDecoration(labelText: '郵便番号')),
-                TextField(decoration: InputDecoration(labelText: '住所')),
-                SizedBox(height: 16),
-              ],
-              if (ui.needPickupStore) ...const [
-                Text('受取店舗', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                TextField(decoration: InputDecoration(labelText: '店舗コード')),
-                SizedBox(height: 16),
-              ],
-
-              Text('小計: ${order.totalBeforeDiscount}'),
-              Text('割引: -${order.discountAmount}'),
-              Text('合計: ${order.totalAfterDiscount}'),
+              _AddressSection(state: ui.address),
+              const SizedBox(height: 16),
+              _TotalsView(
+                subtotal: ui.subtotal,
+                discount: ui.discount,
+                total: ui.total,
+              ),
               const SizedBox(height: 20),
-
-              ElevatedButton(
-                onPressed: ui.buyEnabled ? () {} : null,
-                child: Text(
-                  ui.buyEnabled ? '購入する' : '購入できません（${ui.disabledReason}）',
-                ),
-              ),
-
+              _BuyButton(state: ui.buy),
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () => notifier.fetch(_orderId),
@@ -108,80 +56,153 @@ class GoodOrderFormPage extends HookConsumerWidget {
   }
 }
 
-/// ====== “UIで必要な結論”だけを持つ軽量UiStateと導出関数 ======
-class _PaymentAvailability {
-  final bool card, cod, bank;
-  const _PaymentAvailability({
-    required this.card,
-    required this.cod,
-    required this.bank,
-  });
+//
+// ===== コンポーネント（内部で switch して描画） =====
+//
+
+class _BannerView extends StatelessWidget {
+  final BannerState state;
+  const _BannerView({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (state) {
+      NoBanner() => const SizedBox.shrink(),
+      InfoBanner(:final text) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF3CD),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(text),
+      ),
+    };
+  }
 }
 
-class _OrderUiState {
-  final String? bannerText;
-  final _PaymentAvailability payment;
-  final bool needAddress;
-  final bool needPickupStore;
-  final bool buyEnabled;
-  final String? disabledReason;
-  const _OrderUiState({
-    required this.bannerText,
-    required this.payment,
-    required this.needAddress,
-    required this.needPickupStore,
-    required this.buyEnabled,
-    required this.disabledReason,
-  });
+class _PaymentSection extends StatelessWidget {
+  final PaymentUiState state;
+  final ValueChanged<PaymentMethod> onChanged;
+  const _PaymentSection({required this.state, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (state) {
+      PaymentOptions(:final card, :final cod, :final bank, :final selected) =>
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('支払い方法', style: TextStyle(fontWeight: FontWeight.bold)),
+            RadioGroup<PaymentMethod>(
+              groupValue: selected,
+              onChanged: (v) {
+                if (v != null) onChanged(v);
+              },
+              child: Column(
+                children: [
+                  _radioTile(
+                    enabled: card,
+                    title: 'クレジットカード',
+                    value: PaymentMethod.card,
+                  ),
+                  _radioTile(
+                    enabled: cod,
+                    title: '代金引換',
+                    value: PaymentMethod.cod,
+                  ),
+                  _radioTile(
+                    enabled: bank,
+                    title: '銀行振込',
+                    value: PaymentMethod.bank,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+    };
+  }
+
+  Widget _radioTile({
+    required bool enabled,
+    required String title,
+    required PaymentMethod value,
+  }) {
+    final tile = RadioListTile<PaymentMethod>(title: Text(title), value: value);
+    if (enabled) return tile;
+    // 無効時は操作不可＋薄く
+    return IgnorePointer(
+      ignoring: true,
+      child: Opacity(opacity: 0.4, child: tile),
+    );
+  }
 }
 
-_OrderUiState _deriveViewState(Order o) {
-  final hasSoldOut = o.items.any((i) => i.stock == Stock.soldOut);
-  if (hasSoldOut && o.orderType != OrderType.preorder) {
-    return const _OrderUiState(
-      bannerText: '在庫がありません',
-      payment: _PaymentAvailability(card: false, cod: false, bank: false),
-      needAddress: true,
-      needPickupStore: false,
-      buyEnabled: false,
-      disabledReason: '在庫なし',
+class _AddressSection extends StatelessWidget {
+  final AddressSectionState state;
+  const _AddressSection({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (state) {
+      NeedHomeAddress() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text('お届け先', style: TextStyle(fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          TextField(decoration: InputDecoration(labelText: '郵便番号')),
+          TextField(decoration: InputDecoration(labelText: '住所')),
+        ],
+      ),
+      NeedPickupStore() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text('受取店舗', style: TextStyle(fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          TextField(decoration: InputDecoration(labelText: '店舗コード')),
+        ],
+      ),
+      NoAddressInputs() => const SizedBox.shrink(),
+    };
+  }
+}
+
+class _TotalsView extends StatelessWidget {
+  final int subtotal, discount, total;
+  const _TotalsView({
+    required this.subtotal,
+    required this.discount,
+    required this.total,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('小計: $subtotal'),
+        Text('割引: -$discount'),
+        Text('合計: $total'),
+      ],
     );
   }
-  if (o.orderType == OrderType.preorder) {
-    return _OrderUiState(
-      bannerText: '予約商品は代引不可',
-      payment: const _PaymentAvailability(card: true, cod: false, bank: true),
-      needAddress: o.shipment == Shipment.home,
-      needPickupStore: o.shipment == Shipment.pickup,
-      buyEnabled: true,
-      disabledReason: null,
-    );
+}
+
+class _BuyButton extends StatelessWidget {
+  final BuyButtonState state;
+  const _BuyButton({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (state) {
+      BuyEnabled() => ElevatedButton(
+        onPressed: () {},
+        child: const Text('購入する'),
+      ),
+      BuyDisabled(:final reason) => ElevatedButton(
+        onPressed: null,
+        child: Text('購入できません（$reason）'),
+      ),
+    };
   }
-  if (o.orderType == OrderType.subscription) {
-    return _OrderUiState(
-      bannerText: '定期購入はクレジットカードのみ',
-      payment: const _PaymentAvailability(card: true, cod: false, bank: false),
-      needAddress: o.shipment == Shipment.home,
-      needPickupStore: o.shipment == Shipment.pickup,
-      buyEnabled: true,
-      disabledReason: null,
-    );
-  }
-  final hasLimited = o.items.any((i) => i.stock == Stock.limited);
-  final isPercent = o.coupon.maybeWhen(
-    percentOff: (_) => true,
-    orElse: () => false,
-  );
-  final banner = hasLimited ? '在庫が残りわずかです' : null;
-  final payment = (hasLimited && isPercent)
-      ? const _PaymentAvailability(card: true, cod: true, bank: false)
-      : const _PaymentAvailability(card: true, cod: true, bank: true);
-  return _OrderUiState(
-    bannerText: banner,
-    payment: payment,
-    needAddress: o.shipment == Shipment.home,
-    needPickupStore: o.shipment == Shipment.pickup,
-    buyEnabled: true,
-    disabledReason: null,
-  );
 }
