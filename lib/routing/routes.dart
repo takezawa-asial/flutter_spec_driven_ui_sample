@@ -27,7 +27,7 @@ class GoodOrderFormRoute extends GoRouteData with $GoodOrderFormRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      const BadOrderFormPage();
+      const GoodOrderFormPage();
 
   static final GlobalKey<NavigatorState> $parentNavigatorKey = rootNavigatorKey;
 }

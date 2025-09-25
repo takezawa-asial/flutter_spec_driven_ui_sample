@@ -16,7 +16,6 @@ class MyApp extends HookConsumerWidget {
     return MaterialApp.router(
       routerConfig: ref.watch(goRouterProvider),
       title: 'test',
-      supportedLocales: const [Locale('ja', 'JP')],
     );
   }
 }
