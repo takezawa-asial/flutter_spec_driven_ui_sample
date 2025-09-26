@@ -37,11 +37,6 @@ class BadOrderFormPage extends HookConsumerWidget {
               _BadTotals(order: order),
               const SizedBox(height: 20),
               _BadBuyButton(order: order),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () => notifier.fetch(_orderId),
-                child: const Text('Refetch'),
-              ),
             ],
           );
         },
@@ -87,6 +82,27 @@ class _BadPayment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('支払い方法（Bad）', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        _BadPaymentMethod(order: order, onChanged: onChanged),
+        const SizedBox(height: 12),
+        _BadPaymentDetail(order: order),
+      ],
+    );
+  }
+}
+
+/// 支払い方法の選択（Bad: 各種ビジネス分岐をここで直接計算）
+class _BadPaymentMethod extends StatelessWidget {
+  final Order order;
+  final ValueChanged<PaymentMethod> onChanged;
+  const _BadPaymentMethod({required this.order, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
     bool card = true, cod = true, bank = true;
     if (order.orderType == OrderType.preorder) cod = false;
     if (order.orderType == OrderType.subscription) {
@@ -100,32 +116,25 @@ class _BadPayment extends StatelessWidget {
     );
     if (hasLimited && isPercent) bank = false;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('支払い方法（Bad）', style: TextStyle(fontWeight: FontWeight.bold)),
-        RadioGroup<PaymentMethod>(
-          groupValue: order.paymentMethod,
-          onChanged: (v) {
-            if (v != null) onChanged(v);
-          },
-          child: Column(
-            children: [
-              _radioTile(
-                enabled: card,
-                title: 'クレジットカード',
-                value: PaymentMethod.card,
-              ),
-              _radioTile(enabled: cod, title: '代金引換', value: PaymentMethod.cod),
-              _radioTile(
-                enabled: bank,
-                title: '銀行振込',
-                value: PaymentMethod.bank,
-              ),
-            ],
+    return RadioGroup<PaymentMethod>(
+      groupValue: order.paymentMethod,
+      onChanged: (v) {
+        if (v == null) return;
+        if (v == PaymentMethod.cod && !cod) return;
+        if (v == PaymentMethod.bank && !bank) return;
+        onChanged(v);
+      },
+      child: Column(
+        children: [
+          _radioTile(
+            enabled: card,
+            title: 'クレジットカード',
+            value: PaymentMethod.card,
           ),
-        ),
-      ],
+          _radioTile(enabled: cod, title: '代金引換', value: PaymentMethod.cod),
+          _radioTile(enabled: bank, title: '銀行振込', value: PaymentMethod.bank),
+        ],
+      ),
     );
   }
 
@@ -135,11 +144,44 @@ class _BadPayment extends StatelessWidget {
     required PaymentMethod value,
   }) {
     final tile = RadioListTile<PaymentMethod>(title: Text(title), value: value);
-    if (enabled) return tile;
-    return IgnorePointer(
-      ignoring: true,
-      child: Opacity(opacity: 0.4, child: tile),
-    );
+    return enabled
+        ? tile
+        : IgnorePointer(
+            ignoring: true,
+            child: Opacity(opacity: 0.4, child: tile),
+          );
+  }
+}
+
+class _BadPaymentDetail extends StatelessWidget {
+  final Order order;
+  const _BadPaymentDetail({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    switch (order.paymentMethod) {
+      case PaymentMethod.bank:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text('銀行振込情報', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            TextField(decoration: InputDecoration(labelText: '銀行名')),
+            TextField(decoration: InputDecoration(labelText: '口座番号')),
+          ],
+        );
+      case PaymentMethod.card:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text('クレジットカード情報', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            TextField(decoration: InputDecoration(labelText: 'カード番号')),
+          ],
+        );
+      case PaymentMethod.cod:
+        return const SizedBox.shrink(); // 代引きは入力不要
+    }
   }
 }
 

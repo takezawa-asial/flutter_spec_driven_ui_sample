@@ -2,6 +2,17 @@ import 'package:flutter_spec_driven_ui_sample/features/order/domain/model/order.
 import 'package:flutter_spec_driven_ui_sample/features/order/ui/state/good/good_order_form_page_ui_state.dart';
 
 GoodOrderFormPageUiState deriveGoodUiState(Order o) {
+  final detail = () {
+    switch (o.paymentMethod) {
+      case PaymentMethod.card:
+        return const PaymentDetailState.card();
+      case PaymentMethod.bank:
+        return const PaymentDetailState.bank();
+      case PaymentMethod.cod:
+        return const PaymentDetailState.none();
+    }
+  }();
+
   // 1) 在庫なし（予約除く）
   final hasSoldOut = o.items.any((i) => i.stock == Stock.soldOut);
   if (hasSoldOut && o.orderType != OrderType.preorder) {
@@ -17,6 +28,7 @@ GoodOrderFormPageUiState deriveGoodUiState(Order o) {
           ? const AddressSectionState.needHome()
           : const AddressSectionState.needPickup(),
       buy: const BuyButtonState.disabled('在庫なし'),
+      paymentDetail: detail,
       subtotal: o.totalBeforeDiscount,
       discount: o.discountAmount,
       total: o.totalAfterDiscount,
@@ -37,6 +49,7 @@ GoodOrderFormPageUiState deriveGoodUiState(Order o) {
           ? const AddressSectionState.needHome()
           : const AddressSectionState.needPickup(),
       buy: const BuyButtonState.enabled(),
+      paymentDetail: detail,
       subtotal: o.totalBeforeDiscount,
       discount: o.discountAmount,
       total: o.totalAfterDiscount,
@@ -57,6 +70,7 @@ GoodOrderFormPageUiState deriveGoodUiState(Order o) {
           ? const AddressSectionState.needHome()
           : const AddressSectionState.needPickup(),
       buy: const BuyButtonState.enabled(),
+      paymentDetail: detail,
       subtotal: o.totalBeforeDiscount,
       discount: o.discountAmount,
       total: o.totalAfterDiscount,
@@ -84,6 +98,7 @@ GoodOrderFormPageUiState deriveGoodUiState(Order o) {
         ? const AddressSectionState.needHome()
         : const AddressSectionState.needPickup(),
     buy: const BuyButtonState.enabled(),
+    paymentDetail: detail,
     subtotal: o.totalBeforeDiscount,
     discount: o.discountAmount,
     total: o.totalAfterDiscount,

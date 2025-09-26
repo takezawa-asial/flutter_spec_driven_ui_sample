@@ -27,27 +27,23 @@ class GoodOrderFormPage extends HookConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _BannerView(state: ui.banner),
+              _GoodBannerView(state: ui.banner),
               const SizedBox(height: 16),
-              _PaymentSection(
-                state: ui.payment,
+              _GoodPayment(
+                methodState: ui.payment,
+                detailState: ui.paymentDetail,
                 onChanged: (m) => notifier.selectPayment(m),
               ),
               const SizedBox(height: 16),
-              _AddressSection(state: ui.address),
+              _GoodAddressSection(state: ui.address),
               const SizedBox(height: 16),
-              _TotalsView(
+              _GoodTotalsView(
                 subtotal: ui.subtotal,
                 discount: ui.discount,
                 total: ui.total,
               ),
               const SizedBox(height: 20),
-              _BuyButton(state: ui.buy),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () => notifier.fetch(_orderId),
-                child: const Text('Refetch'),
-              ),
+              _GoodBuyButton(state: ui.buy),
             ],
           );
         },
@@ -56,19 +52,15 @@ class GoodOrderFormPage extends HookConsumerWidget {
   }
 }
 
-//
-// ===== コンポーネント（内部で switch して描画） =====
-//
-
-class _BannerView extends StatelessWidget {
+class _GoodBannerView extends StatelessWidget {
   final BannerState state;
-  const _BannerView({required this.state});
+  const _GoodBannerView({required this.state});
 
   @override
   Widget build(BuildContext context) {
     return switch (state) {
-      NoBanner() => const SizedBox.shrink(),
-      InfoBanner(:final text) => Container(
+      BannerNone() => const SizedBox.shrink(),
+      BannerInfo(:final text) => Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: const Color(0xFFFFF3CD),
@@ -80,45 +72,60 @@ class _BannerView extends StatelessWidget {
   }
 }
 
-class _PaymentSection extends StatelessWidget {
+class _GoodPayment extends StatelessWidget {
+  final PaymentUiState methodState;
+  final PaymentDetailState detailState;
+  final ValueChanged<PaymentMethod> onChanged;
+  const _GoodPayment({
+    required this.methodState,
+    required this.detailState,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('支払い方法', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        _GoodPaymentMethod(state: methodState, onChanged: onChanged),
+        const SizedBox(height: 12),
+        _GoodPaymentDetail(state: detailState),
+      ],
+    );
+  }
+}
+
+class _GoodPaymentMethod extends StatelessWidget {
   final PaymentUiState state;
   final ValueChanged<PaymentMethod> onChanged;
-  const _PaymentSection({required this.state, required this.onChanged});
+  const _GoodPaymentMethod({required this.state, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     return switch (state) {
       PaymentOptions(:final card, :final cod, :final bank, :final selected) =>
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('支払い方法', style: TextStyle(fontWeight: FontWeight.bold)),
-            RadioGroup<PaymentMethod>(
-              groupValue: selected,
-              onChanged: (v) {
-                if (v != null) onChanged(v);
-              },
-              child: Column(
-                children: [
-                  _radioTile(
-                    enabled: card,
-                    title: 'クレジットカード',
-                    value: PaymentMethod.card,
-                  ),
-                  _radioTile(
-                    enabled: cod,
-                    title: '代金引換',
-                    value: PaymentMethod.cod,
-                  ),
-                  _radioTile(
-                    enabled: bank,
-                    title: '銀行振込',
-                    value: PaymentMethod.bank,
-                  ),
-                ],
+        RadioGroup<PaymentMethod>(
+          groupValue: selected,
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+          child: Column(
+            children: [
+              _radioTile(
+                enabled: card,
+                title: 'クレジットカード',
+                value: PaymentMethod.card,
               ),
-            ),
-          ],
+              _radioTile(enabled: cod, title: '代金引換', value: PaymentMethod.cod),
+              _radioTile(
+                enabled: bank,
+                title: '銀行振込',
+                value: PaymentMethod.bank,
+              ),
+            ],
+          ),
         ),
     };
   }
@@ -129,23 +136,52 @@ class _PaymentSection extends StatelessWidget {
     required PaymentMethod value,
   }) {
     final tile = RadioListTile<PaymentMethod>(title: Text(title), value: value);
-    if (enabled) return tile;
-    // 無効時は操作不可＋薄く
-    return IgnorePointer(
-      ignoring: true,
-      child: Opacity(opacity: 0.4, child: tile),
-    );
+    return enabled
+        ? tile
+        : IgnorePointer(
+            ignoring: true,
+            child: Opacity(opacity: 0.4, child: tile),
+          );
   }
 }
 
-class _AddressSection extends StatelessWidget {
-  final AddressSectionState state;
-  const _AddressSection({required this.state});
+class _GoodPaymentDetail extends StatelessWidget {
+  final PaymentDetailState state;
+  const _GoodPaymentDetail({required this.state});
 
   @override
   Widget build(BuildContext context) {
     return switch (state) {
-      NeedHomeAddress() => Column(
+      PaymentDetailNone() => const SizedBox.shrink(),
+      PaymentDetailBank() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text('銀行振込情報', style: TextStyle(fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          TextField(decoration: InputDecoration(labelText: '銀行名')),
+          TextField(decoration: InputDecoration(labelText: '口座番号')),
+        ],
+      ),
+      PaymentDetailCard() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text('クレジットカード情報', style: TextStyle(fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          TextField(decoration: InputDecoration(labelText: 'カード番号')),
+        ],
+      ),
+    };
+  }
+}
+
+class _GoodAddressSection extends StatelessWidget {
+  final AddressSectionState state;
+  const _GoodAddressSection({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (state) {
+      AddressNeedHome() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
           Text('お届け先', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -154,7 +190,7 @@ class _AddressSection extends StatelessWidget {
           TextField(decoration: InputDecoration(labelText: '住所')),
         ],
       ),
-      NeedPickupStore() => Column(
+      AddressNeedPickup() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
           Text('受取店舗', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -162,14 +198,14 @@ class _AddressSection extends StatelessWidget {
           TextField(decoration: InputDecoration(labelText: '店舗コード')),
         ],
       ),
-      NoAddressInputs() => const SizedBox.shrink(),
+      AddressNone() => const SizedBox.shrink(),
     };
   }
 }
 
-class _TotalsView extends StatelessWidget {
+class _GoodTotalsView extends StatelessWidget {
   final int subtotal, discount, total;
-  const _TotalsView({
+  const _GoodTotalsView({
     required this.subtotal,
     required this.discount,
     required this.total,
@@ -188,9 +224,9 @@ class _TotalsView extends StatelessWidget {
   }
 }
 
-class _BuyButton extends StatelessWidget {
+class _GoodBuyButton extends StatelessWidget {
   final BuyButtonState state;
-  const _BuyButton({required this.state});
+  const _GoodBuyButton({required this.state});
 
   @override
   Widget build(BuildContext context) {

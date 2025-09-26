@@ -10,6 +10,7 @@ abstract class GoodOrderFormPageUiState with _$GoodOrderFormPageUiState {
     required PaymentUiState payment,
     required AddressSectionState address,
     required BuyButtonState buy,
+    required PaymentDetailState paymentDetail,
     required int subtotal,
     required int discount,
     required int total,
@@ -18,8 +19,8 @@ abstract class GoodOrderFormPageUiState with _$GoodOrderFormPageUiState {
 
 @freezed
 sealed class BannerState with _$BannerState {
-  const factory BannerState.none() = NoBanner;
-  const factory BannerState.info(String text) = InfoBanner;
+  const factory BannerState.none() = BannerNone;
+  const factory BannerState.info(String text) = BannerInfo;
 }
 
 @freezed
@@ -34,13 +35,20 @@ sealed class PaymentUiState with _$PaymentUiState {
 
 @freezed
 sealed class AddressSectionState with _$AddressSectionState {
-  const factory AddressSectionState.needHome() = NeedHomeAddress;
-  const factory AddressSectionState.needPickup() = NeedPickupStore;
-  const factory AddressSectionState.none() = NoAddressInputs;
+  const factory AddressSectionState.needHome() = AddressNeedHome;
+  const factory AddressSectionState.needPickup() = AddressNeedPickup;
+  const factory AddressSectionState.none() = AddressNone;
 }
 
 @freezed
 sealed class BuyButtonState with _$BuyButtonState {
   const factory BuyButtonState.enabled() = BuyEnabled;
   const factory BuyButtonState.disabled(String reason) = BuyDisabled;
+}
+
+@freezed
+sealed class PaymentDetailState with _$PaymentDetailState {
+  const factory PaymentDetailState.none() = PaymentDetailNone;
+  const factory PaymentDetailState.bank() = PaymentDetailBank;
+  const factory PaymentDetailState.card() = PaymentDetailCard;
 }
