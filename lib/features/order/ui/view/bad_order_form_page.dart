@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_spec_driven_ui_sample/features/order/domain/model/order.dart';
 import 'package:flutter_spec_driven_ui_sample/features/order/ui/provider/order_form_state_notifier.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 
 class BadOrderFormPage extends HookConsumerWidget {
   const BadOrderFormPage({super.key});
@@ -22,12 +22,15 @@ class BadOrderFormPage extends HookConsumerWidget {
         data: (s) {
           final order = s.order;
           // Initialize controllers with existing values if present
-          final postalController =
-              useTextEditingController(text: order.shippingAddress?.postalCode ?? '');
-          final addressController =
-              useTextEditingController(text: order.shippingAddress?.line1 ?? '');
-          final storeCodeController =
-              useTextEditingController(text: order.pickupStore?.storeCode ?? '');
+          final postalController = useTextEditingController(
+            text: order.shippingAddress?.postalCode ?? '',
+          );
+          final addressController = useTextEditingController(
+            text: order.shippingAddress?.line1 ?? '',
+          );
+          final storeCodeController = useTextEditingController(
+            text: order.pickupStore?.storeCode ?? '',
+          );
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [

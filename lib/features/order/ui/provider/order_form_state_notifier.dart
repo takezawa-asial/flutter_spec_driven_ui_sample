@@ -25,8 +25,7 @@ class OrderFormStateNotifier extends _$OrderFormStateNotifier {
     await Future<void>.delayed(const Duration(milliseconds: 400));
 
     // ------------------------------------------------------------
-    // article.md の「ケース表」に対応するサンプル Order（コメントアウト）
-    // 必要に応じて下記のどれかを有効化して挙動確認に使ってください。
+    // article.md の表に対応するサンプル Order（コメントアウト）
     //
     // ケース1: 通常 × 在庫あり × 自宅 × クーポンなし（すべて選択可）
     // final order = Order(

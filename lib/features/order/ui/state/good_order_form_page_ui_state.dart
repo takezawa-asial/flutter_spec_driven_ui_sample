@@ -39,9 +39,8 @@ sealed class AddressSectionState with _$AddressSectionState {
     required String postalCode,
     required String addressLine1,
   }) = AddressNeedHome;
-  const factory AddressSectionState.needPickup({
-    required String storeCode,
-  }) = AddressNeedPickup;
+  const factory AddressSectionState.needPickup({required String storeCode}) =
+      AddressNeedPickup;
   const factory AddressSectionState.none() = AddressNone;
 }
 

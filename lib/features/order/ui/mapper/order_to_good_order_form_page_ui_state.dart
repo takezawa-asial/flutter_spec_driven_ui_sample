@@ -1,5 +1,5 @@
 import 'package:flutter_spec_driven_ui_sample/features/order/domain/model/order.dart';
-import 'package:flutter_spec_driven_ui_sample/features/order/ui/state/good/good_order_form_page_ui_state.dart';
+import 'package:flutter_spec_driven_ui_sample/features/order/ui/state/good_order_form_page_ui_state.dart';
 
 GoodOrderFormPageUiState deriveGoodUiState(Order o) {
   PaymentMethod coerceSelected(
@@ -36,13 +36,13 @@ GoodOrderFormPageUiState deriveGoodUiState(Order o) {
   // 1) 在庫なし（予約除く）
   final hasSoldOut = o.items.any((i) => i.stock == Stock.soldOut);
   if (hasSoldOut && o.orderType != OrderType.preorder) {
-    final allowed = (
-      card: false,
-      cod: false,
-      bank: false,
+    final allowed = (card: false, cod: false, bank: false);
+    final selected = coerceSelected(
+      o.paymentMethod,
+      card: allowed.card,
+      cod: allowed.cod,
+      bank: allowed.bank,
     );
-    final selected = coerceSelected(o.paymentMethod,
-        card: allowed.card, cod: allowed.cod, bank: allowed.bank);
     return GoodOrderFormPageUiState(
       banner: const BannerState.info('在庫がありません'),
       payment: PaymentUiState.options(
@@ -69,13 +69,13 @@ GoodOrderFormPageUiState deriveGoodUiState(Order o) {
 
   // 2) 予約：代引不可
   if (o.orderType == OrderType.preorder) {
-    final allowed = (
-      card: true,
-      cod: false,
-      bank: true,
+    final allowed = (card: true, cod: false, bank: true);
+    final selected = coerceSelected(
+      o.paymentMethod,
+      card: allowed.card,
+      cod: allowed.cod,
+      bank: allowed.bank,
     );
-    final selected = coerceSelected(o.paymentMethod,
-        card: allowed.card, cod: allowed.cod, bank: allowed.bank);
     return GoodOrderFormPageUiState(
       banner: const BannerState.info('予約商品は代引不可'),
       payment: PaymentUiState.options(
@@ -102,13 +102,13 @@ GoodOrderFormPageUiState deriveGoodUiState(Order o) {
 
   // 3) 定期：カードのみ
   if (o.orderType == OrderType.subscription) {
-    final allowed = (
-      card: true,
-      cod: false,
-      bank: false,
+    final allowed = (card: true, cod: false, bank: false);
+    final selected = coerceSelected(
+      o.paymentMethod,
+      card: allowed.card,
+      cod: allowed.cod,
+      bank: allowed.bank,
     );
-    final selected = coerceSelected(o.paymentMethod,
-        card: allowed.card, cod: allowed.cod, bank: allowed.bank);
     return GoodOrderFormPageUiState(
       banner: const BannerState.info('定期購入はクレジットカードのみ'),
       payment: PaymentUiState.options(
@@ -140,13 +140,13 @@ GoodOrderFormPageUiState deriveGoodUiState(Order o) {
     orElse: () => false,
   );
 
-  final allowed = (
-    card: true,
-    cod: true,
-    bank: !(hasLimited && isPercent),
+  final allowed = (card: true, cod: true, bank: !(hasLimited && isPercent));
+  final selected = coerceSelected(
+    o.paymentMethod,
+    card: allowed.card,
+    cod: allowed.cod,
+    bank: allowed.bank,
   );
-  final selected = coerceSelected(o.paymentMethod,
-      card: allowed.card, cod: allowed.cod, bank: allowed.bank);
   return GoodOrderFormPageUiState(
     banner: hasLimited
         ? const BannerState.info('在庫が残りわずかです')

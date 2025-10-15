@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_spec_driven_ui_sample/features/order/domain/model/order.dart';
 import 'package:flutter_spec_driven_ui_sample/features/order/ui/mapper/order_to_good_order_form_page_ui_state.dart';
 import 'package:flutter_spec_driven_ui_sample/features/order/ui/provider/order_form_state_notifier.dart';
-import 'package:flutter_spec_driven_ui_sample/features/order/ui/state/good/good_order_form_page_ui_state.dart';
+import 'package:flutter_spec_driven_ui_sample/features/order/ui/state/good_order_form_page_ui_state.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 
 class GoodOrderFormPage extends HookConsumerWidget {
   const GoodOrderFormPage({super.key});
@@ -24,7 +24,6 @@ class GoodOrderFormPage extends HookConsumerWidget {
         data: (s) {
           final order = s.order;
           final ui = deriveGoodUiState(order);
-
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -184,41 +183,38 @@ class _GoodAddressSection extends HookWidget {
   Widget build(BuildContext context) {
     return switch (state) {
       AddressNeedHome(:final postalCode, :final addressLine1) => () {
-          final postalController =
-              useTextEditingController(text: postalCode);
-          final addressController =
-              useTextEditingController(text: addressLine1);
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('お届け先', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextField(
-                decoration: const InputDecoration(labelText: '郵便番号'),
-                controller: postalController,
-              ),
-              TextField(
-                decoration: const InputDecoration(labelText: '住所'),
-                controller: addressController,
-              ),
-            ],
-          );
-        }(),
+        final postalController = useTextEditingController(text: postalCode);
+        final addressController = useTextEditingController(text: addressLine1);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('お届け先', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            TextField(
+              decoration: const InputDecoration(labelText: '郵便番号'),
+              controller: postalController,
+            ),
+            TextField(
+              decoration: const InputDecoration(labelText: '住所'),
+              controller: addressController,
+            ),
+          ],
+        );
+      }(),
       AddressNeedPickup(:final storeCode) => () {
-          final storeCodeController =
-              useTextEditingController(text: storeCode);
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('受取店舗', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextField(
-                decoration: const InputDecoration(labelText: '店舗コード'),
-                controller: storeCodeController,
-              ),
-            ],
-          );
-        }(),
+        final storeCodeController = useTextEditingController(text: storeCode);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('受取店舗', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            TextField(
+              decoration: const InputDecoration(labelText: '店舗コード'),
+              controller: storeCodeController,
+            ),
+          ],
+        );
+      }(),
       AddressNone() => const SizedBox.shrink(),
     };
   }
