@@ -35,8 +35,13 @@ sealed class PaymentUiState with _$PaymentUiState {
 
 @freezed
 sealed class AddressSectionState with _$AddressSectionState {
-  const factory AddressSectionState.needHome() = AddressNeedHome;
-  const factory AddressSectionState.needPickup() = AddressNeedPickup;
+  const factory AddressSectionState.needHome({
+    required String postalCode,
+    required String addressLine1,
+  }) = AddressNeedHome;
+  const factory AddressSectionState.needPickup({
+    required String storeCode,
+  }) = AddressNeedPickup;
   const factory AddressSectionState.none() = AddressNone;
 }
 

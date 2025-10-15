@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spec_driven_ui_sample/features/order/domain/model/order.dart';
 import 'package:flutter_spec_driven_ui_sample/features/order/ui/provider/order_form_state_notifier.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
 class BadOrderFormPage extends HookConsumerWidget {
   const BadOrderFormPage({super.key});
@@ -20,6 +21,13 @@ class BadOrderFormPage extends HookConsumerWidget {
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (s) {
           final order = s.order;
+          // Initialize controllers with existing values if present
+          final postalController =
+              useTextEditingController(text: order.shippingAddress?.postalCode ?? '');
+          final addressController =
+              useTextEditingController(text: order.shippingAddress?.line1 ?? '');
+          final storeCodeController =
+              useTextEditingController(text: order.pickupStore?.storeCode ?? '');
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -32,7 +40,12 @@ class BadOrderFormPage extends HookConsumerWidget {
                 },
               ),
               const SizedBox(height: 16),
-              _BadAddress(order: order),
+              _BadAddress(
+                order: order,
+                postalController: postalController,
+                addressController: addressController,
+                storeCodeController: storeCodeController,
+              ),
               const SizedBox(height: 16),
               _BadTotals(order: order),
               const SizedBox(height: 20),
@@ -187,27 +200,44 @@ class _BadPaymentDetail extends StatelessWidget {
 
 class _BadAddress extends StatelessWidget {
   final Order order;
-  const _BadAddress({required this.order});
+  final TextEditingController? postalController;
+  final TextEditingController? addressController;
+  final TextEditingController? storeCodeController;
+  const _BadAddress({
+    required this.order,
+    this.postalController,
+    this.addressController,
+    this.storeCodeController,
+  });
 
   @override
   Widget build(BuildContext context) {
     if (order.shipment == Shipment.home) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('お届け先', style: TextStyle(fontWeight: FontWeight.bold)),
-          SizedBox(height: 8),
-          TextField(decoration: InputDecoration(labelText: '郵便番号')),
-          TextField(decoration: InputDecoration(labelText: '住所')),
+        children: [
+          const Text('お届け先', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          TextField(
+            decoration: const InputDecoration(labelText: '郵便番号'),
+            controller: postalController,
+          ),
+          TextField(
+            decoration: const InputDecoration(labelText: '住所'),
+            controller: addressController,
+          ),
         ],
       );
     } else {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('受取店舗', style: TextStyle(fontWeight: FontWeight.bold)),
-          SizedBox(height: 8),
-          TextField(decoration: InputDecoration(labelText: '店舗コード')),
+        children: [
+          const Text('受取店舗', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          TextField(
+            decoration: const InputDecoration(labelText: '店舗コード'),
+            controller: storeCodeController,
+          ),
         ],
       );
     }

@@ -1008,11 +1008,11 @@ return none(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  needHome,TResult Function()?  needPickup,TResult Function()?  none,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String postalCode,  String addressLine1)?  needHome,TResult Function( String storeCode)?  needPickup,TResult Function()?  none,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AddressNeedHome() when needHome != null:
-return needHome();case AddressNeedPickup() when needPickup != null:
-return needPickup();case AddressNone() when none != null:
+return needHome(_that.postalCode,_that.addressLine1);case AddressNeedPickup() when needPickup != null:
+return needPickup(_that.storeCode);case AddressNone() when none != null:
 return none();case _:
   return orElse();
 
@@ -1031,11 +1031,11 @@ return none();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  needHome,required TResult Function()  needPickup,required TResult Function()  none,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String postalCode,  String addressLine1)  needHome,required TResult Function( String storeCode)  needPickup,required TResult Function()  none,}) {final _that = this;
 switch (_that) {
 case AddressNeedHome():
-return needHome();case AddressNeedPickup():
-return needPickup();case AddressNone():
+return needHome(_that.postalCode,_that.addressLine1);case AddressNeedPickup():
+return needPickup(_that.storeCode);case AddressNone():
 return none();}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -1050,11 +1050,11 @@ return none();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  needHome,TResult? Function()?  needPickup,TResult? Function()?  none,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String postalCode,  String addressLine1)?  needHome,TResult? Function( String storeCode)?  needPickup,TResult? Function()?  none,}) {final _that = this;
 switch (_that) {
 case AddressNeedHome() when needHome != null:
-return needHome();case AddressNeedPickup() when needPickup != null:
-return needPickup();case AddressNone() when none != null:
+return needHome(_that.postalCode,_that.addressLine1);case AddressNeedPickup() when needPickup != null:
+return needPickup(_that.storeCode);case AddressNone() when none != null:
 return none();case _:
   return null;
 
@@ -1067,65 +1067,135 @@ return none();case _:
 
 
 class AddressNeedHome implements AddressSectionState {
-  const AddressNeedHome();
+  const AddressNeedHome({required this.postalCode, required this.addressLine1});
   
 
+ final  String postalCode;
+ final  String addressLine1;
 
-
+/// Create a copy of AddressSectionState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AddressNeedHomeCopyWith<AddressNeedHome> get copyWith => _$AddressNeedHomeCopyWithImpl<AddressNeedHome>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddressNeedHome);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddressNeedHome&&(identical(other.postalCode, postalCode) || other.postalCode == postalCode)&&(identical(other.addressLine1, addressLine1) || other.addressLine1 == addressLine1));
 }
 
 
 @override
-int get hashCode => runtimeType.hashCode;
+int get hashCode => Object.hash(runtimeType,postalCode,addressLine1);
 
 @override
 String toString() {
-  return 'AddressSectionState.needHome()';
+  return 'AddressSectionState.needHome(postalCode: $postalCode, addressLine1: $addressLine1)';
 }
 
 
 }
 
+/// @nodoc
+abstract mixin class $AddressNeedHomeCopyWith<$Res> implements $AddressSectionStateCopyWith<$Res> {
+  factory $AddressNeedHomeCopyWith(AddressNeedHome value, $Res Function(AddressNeedHome) _then) = _$AddressNeedHomeCopyWithImpl;
+@useResult
+$Res call({
+ String postalCode, String addressLine1
+});
 
 
+
+
+}
+/// @nodoc
+class _$AddressNeedHomeCopyWithImpl<$Res>
+    implements $AddressNeedHomeCopyWith<$Res> {
+  _$AddressNeedHomeCopyWithImpl(this._self, this._then);
+
+  final AddressNeedHome _self;
+  final $Res Function(AddressNeedHome) _then;
+
+/// Create a copy of AddressSectionState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? postalCode = null,Object? addressLine1 = null,}) {
+  return _then(AddressNeedHome(
+postalCode: null == postalCode ? _self.postalCode : postalCode // ignore: cast_nullable_to_non_nullable
+as String,addressLine1: null == addressLine1 ? _self.addressLine1 : addressLine1 // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
 
 /// @nodoc
 
 
 class AddressNeedPickup implements AddressSectionState {
-  const AddressNeedPickup();
+  const AddressNeedPickup({required this.storeCode});
   
 
+ final  String storeCode;
 
-
+/// Create a copy of AddressSectionState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AddressNeedPickupCopyWith<AddressNeedPickup> get copyWith => _$AddressNeedPickupCopyWithImpl<AddressNeedPickup>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddressNeedPickup);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddressNeedPickup&&(identical(other.storeCode, storeCode) || other.storeCode == storeCode));
 }
 
 
 @override
-int get hashCode => runtimeType.hashCode;
+int get hashCode => Object.hash(runtimeType,storeCode);
 
 @override
 String toString() {
-  return 'AddressSectionState.needPickup()';
+  return 'AddressSectionState.needPickup(storeCode: $storeCode)';
 }
 
 
 }
 
+/// @nodoc
+abstract mixin class $AddressNeedPickupCopyWith<$Res> implements $AddressSectionStateCopyWith<$Res> {
+  factory $AddressNeedPickupCopyWith(AddressNeedPickup value, $Res Function(AddressNeedPickup) _then) = _$AddressNeedPickupCopyWithImpl;
+@useResult
+$Res call({
+ String storeCode
+});
 
 
+
+
+}
+/// @nodoc
+class _$AddressNeedPickupCopyWithImpl<$Res>
+    implements $AddressNeedPickupCopyWith<$Res> {
+  _$AddressNeedPickupCopyWithImpl(this._self, this._then);
+
+  final AddressNeedPickup _self;
+  final $Res Function(AddressNeedPickup) _then;
+
+/// Create a copy of AddressSectionState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? storeCode = null,}) {
+  return _then(AddressNeedPickup(
+storeCode: null == storeCode ? _self.storeCode : storeCode // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
 
 /// @nodoc
 
