@@ -6,31 +6,23 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class BadOrderFormPage extends HookConsumerWidget {
   const BadOrderFormPage({super.key});
+
   static const _orderId = 'bad-001';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = orderFormStateProvider(_orderId);
-    final async = ref.watch(provider);
+    final asyncValue = ref.watch(provider);
     final notifier = ref.watch(provider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Bad Order Form')),
-      body: async.when(
+      body: asyncValue.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (s) {
           final order = s.order;
-          // Initialize controllers with existing values if present
-          final postalController = useTextEditingController(
-            text: order.shippingAddress?.postalCode ?? '',
-          );
-          final addressController = useTextEditingController(
-            text: order.shippingAddress?.line1 ?? '',
-          );
-          final storeCodeController = useTextEditingController(
-            text: order.pickupStore?.storeCode ?? '',
-          );
+
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -43,12 +35,7 @@ class BadOrderFormPage extends HookConsumerWidget {
                 },
               ),
               const SizedBox(height: 16),
-              _BadAddress(
-                order: order,
-                postalController: postalController,
-                addressController: addressController,
-                storeCodeController: storeCodeController,
-              ),
+              _BadAddress(order: order),
               const SizedBox(height: 16),
               _BadTotals(order: order),
               const SizedBox(height: 20),
@@ -62,8 +49,9 @@ class BadOrderFormPage extends HookConsumerWidget {
 }
 
 class _BadBanner extends StatelessWidget {
-  final Order order;
   const _BadBanner({required this.order});
+
+  final Order order;
 
   @override
   Widget build(BuildContext context) {
@@ -92,9 +80,10 @@ class _BadBanner extends StatelessWidget {
 }
 
 class _BadPayment extends StatelessWidget {
+  const _BadPayment({required this.order, required this.onChanged});
+
   final Order order;
   final ValueChanged<PaymentMethod> onChanged;
-  const _BadPayment({required this.order, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -170,8 +159,9 @@ class _BadPaymentMethod extends StatelessWidget {
 }
 
 class _BadPaymentDetail extends StatelessWidget {
-  final Order order;
   const _BadPaymentDetail({required this.order});
+
+  final Order order;
 
   @override
   Widget build(BuildContext context) {
@@ -201,21 +191,20 @@ class _BadPaymentDetail extends StatelessWidget {
   }
 }
 
-class _BadAddress extends StatelessWidget {
+class _BadAddress extends HookWidget {
+  const _BadAddress({required this.order});
+
   final Order order;
-  final TextEditingController? postalController;
-  final TextEditingController? addressController;
-  final TextEditingController? storeCodeController;
-  const _BadAddress({
-    required this.order,
-    this.postalController,
-    this.addressController,
-    this.storeCodeController,
-  });
 
   @override
   Widget build(BuildContext context) {
     if (order.shipment == Shipment.home) {
+      final postalController = useTextEditingController(
+        text: order.shippingAddress?.postalCode ?? '',
+      );
+      final addressController = useTextEditingController(
+        text: order.shippingAddress?.line1 ?? '',
+      );
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -232,6 +221,9 @@ class _BadAddress extends StatelessWidget {
         ],
       );
     } else {
+      final storeCodeController = useTextEditingController(
+        text: order.pickupStore?.storeCode ?? '',
+      );
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -248,8 +240,9 @@ class _BadAddress extends StatelessWidget {
 }
 
 class _BadTotals extends StatelessWidget {
-  final Order order;
   const _BadTotals({required this.order});
+
+  final Order order;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -263,8 +256,9 @@ class _BadTotals extends StatelessWidget {
 }
 
 class _BadBuyButton extends StatelessWidget {
-  final Order order;
   const _BadBuyButton({required this.order});
+
+  final Order order;
 
   @override
   Widget build(BuildContext context) {

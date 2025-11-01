@@ -8,17 +8,18 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class GoodOrderFormPage extends HookConsumerWidget {
   const GoodOrderFormPage({super.key});
+
   static const _orderId = 'good-001';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = orderFormStateProvider(_orderId);
-    final async = ref.watch(provider);
+    final asyncValue = ref.watch(provider);
     final notifier = ref.watch(provider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Good Order Form')),
-      body: async.when(
+      body: asyncValue.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (s) {
@@ -54,8 +55,9 @@ class GoodOrderFormPage extends HookConsumerWidget {
 }
 
 class _GoodBannerView extends StatelessWidget {
-  final BannerState state;
   const _GoodBannerView({required this.state});
+
+  final BannerState state;
 
   @override
   Widget build(BuildContext context) {
@@ -74,14 +76,15 @@ class _GoodBannerView extends StatelessWidget {
 }
 
 class _GoodPayment extends StatelessWidget {
-  final PaymentUiState methodState;
-  final PaymentDetailState detailState;
-  final ValueChanged<PaymentMethod> onChanged;
   const _GoodPayment({
     required this.methodState,
     required this.detailState,
     required this.onChanged,
   });
+
+  final PaymentUiState methodState;
+  final PaymentDetailState detailState;
+  final ValueChanged<PaymentMethod> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -99,9 +102,10 @@ class _GoodPayment extends StatelessWidget {
 }
 
 class _GoodPaymentMethod extends StatelessWidget {
+  const _GoodPaymentMethod({required this.state, required this.onChanged});
+
   final PaymentUiState state;
   final ValueChanged<PaymentMethod> onChanged;
-  const _GoodPaymentMethod({required this.state, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -147,8 +151,9 @@ class _GoodPaymentMethod extends StatelessWidget {
 }
 
 class _GoodPaymentDetail extends StatelessWidget {
-  final PaymentDetailState state;
   const _GoodPaymentDetail({required this.state});
+
+  final PaymentDetailState state;
 
   @override
   Widget build(BuildContext context) {
@@ -176,8 +181,9 @@ class _GoodPaymentDetail extends StatelessWidget {
 }
 
 class _GoodAddressSection extends HookWidget {
-  final AddressSectionState state;
   const _GoodAddressSection({required this.state});
+
+  final AddressSectionState state;
 
   @override
   Widget build(BuildContext context) {
@@ -221,12 +227,13 @@ class _GoodAddressSection extends HookWidget {
 }
 
 class _GoodTotalsView extends StatelessWidget {
-  final int subtotal, discount, total;
   const _GoodTotalsView({
     required this.subtotal,
     required this.discount,
     required this.total,
   });
+
+  final int subtotal, discount, total;
 
   @override
   Widget build(BuildContext context) {
@@ -242,8 +249,9 @@ class _GoodTotalsView extends StatelessWidget {
 }
 
 class _GoodBuyButton extends StatelessWidget {
-  final BuyButtonState state;
   const _GoodBuyButton({required this.state});
+
+  final BuyButtonState state;
 
   @override
   Widget build(BuildContext context) {
