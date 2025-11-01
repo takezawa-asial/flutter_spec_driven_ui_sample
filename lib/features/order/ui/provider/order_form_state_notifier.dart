@@ -158,12 +158,16 @@ class OrderFormStateNotifier extends _$OrderFormStateNotifier {
   }
 
   Future<void> selectPayment(PaymentMethod method) async {
-    final current = await future; // 現在の OrderFormState
+    final current = state.value;
+    if (current == null) {
+      return;
+    }
+
     final order = current.order;
 
     // そのまま選択
     final updated = order.copyWith(paymentMethod: method);
 
-    state = AsyncData(OrderFormState(order: updated));
+    state = AsyncData(current.copyWith(order: updated));
   }
 }

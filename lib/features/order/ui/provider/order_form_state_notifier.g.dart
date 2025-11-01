@@ -52,7 +52,7 @@ final class OrderFormStateNotifierProvider
 }
 
 String _$orderFormStateNotifierHash() =>
-    r'a519dfd3120471ac5b000c1669657e53352b06a3';
+    r'c5aa4372f11cc5244381e81df73b1870a6312811';
 
 final class OrderFormStateNotifierFamily extends $Family
     with
