@@ -1,15 +1,9 @@
 // order_form_state_notifier.dart
 import 'package:flutter_spec_driven_ui_sample/features/order/domain/model/order.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter_spec_driven_ui_sample/features/order/ui/state/order_form_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'order_form_state_notifier.freezed.dart';
 part 'order_form_state_notifier.g.dart';
-
-@freezed
-abstract class OrderFormState with _$OrderFormState {
-  const factory OrderFormState({required Order order}) = _OrderFormState;
-}
 
 @riverpod
 class OrderFormStateNotifier extends _$OrderFormStateNotifier {
